@@ -17,6 +17,20 @@ module AdventOfCode
             Scissors.instance
           end
         end
+
+        def defeats?(other)
+          other == defeats
+        end
+
+        def defeated_by
+          @defeated_by ||= shapes.detect { |shape| shape.defeats == self }
+        end
+
+        private
+
+        def shapes
+          @shapes ||= [Rock.instance, Paper.instance, Scissors.instance]
+        end
       end
 
       class Rock < Shape
@@ -24,8 +38,8 @@ module AdventOfCode
           1
         end
 
-        def defeats?(other)
-          other == Scissors.instance
+        def defeats
+          Scissors.instance
         end
       end
 
@@ -34,8 +48,8 @@ module AdventOfCode
           2
         end
 
-        def defeats?(other)
-          other == Rock.instance
+        def defeats
+          Rock.instance
         end
       end
 
@@ -44,25 +58,59 @@ module AdventOfCode
           3
         end
 
-        def defeats?(other)
-          other == Paper.instance
+        def defeats
+          Paper.instance
         end
       end
 
+      RESULT_CODES = {
+        "X" => :lose,
+        "Y" => :draw,
+        "Z" => :win
+      }
+
       def part1
-        opponent_and_response.inject(0) do |total, (opponent, response)|
-          total += response.points
-          total += 6 if response.defeats?(opponent)
-          total += 3 if response == opponent
-          total
+        opponent_and_response.sum do |opponent, response|
+          points_for(opponent, response)
+        end
+      end
+
+      def part2
+        opponent_and_result.sum do |opponent, result_code|
+          response = choose_response(opponent, result_code)
+          points_for(opponent, response)
         end
       end
 
       private
 
+      def points_for(opponent, response)
+        points = response.points
+        points += 6 if response.defeats?(opponent)
+        points += 3 if response == opponent
+        points
+      end
+
+      def choose_response(opponent, result_code)
+        case result_code
+        when :lose, "X"
+          opponent.defeats
+        when :draw, "Y"
+          opponent
+        when :win, "Z"
+          opponent.defeated_by
+        end
+      end
+
       def opponent_and_response
         rounds.map do |round|
           round.map { |code| Shape.find(code) }
+        end
+      end
+
+      def opponent_and_result
+        rounds.map do |opponent_code, result_code|
+          [Shape.find(opponent_code), result_code]
         end
       end
 
