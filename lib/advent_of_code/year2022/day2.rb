@@ -1,47 +1,73 @@
 require_relative "../day"
+require "singleton"
 
 module AdventOfCode
   module Year2022
     class Day2 < Day
-      SHAPE_CODES = {
-        "A" => :rock,
-        "B" => :paper,
-        "C" => :scissors,
-        "X" => :rock,
-        "Y" => :paper,
-        "Z" => :scissors
-      }.freeze
+      class Shape
+        include Singleton
 
-      DEFEATED_BY = {
-        rock: :scissors,
-        scissors: :paper,
-        paper: :rock
-      }.freeze
+        def self.find(code)
+          case code
+          when "A", "X"
+            Rock.instance
+          when "B", "Y"
+            Paper.instance
+          when "C", "Z"
+            Scissors.instance
+          end
+        end
+      end
 
-      SHAPE_VALUES = { rock: 1, paper: 2, scissors: 3 }.freeze
+      class Rock < Shape
+        def points
+          1
+        end
+
+        def defeats?(other)
+          other == Scissors.instance
+        end
+      end
+
+      class Paper < Shape
+        def points
+          2
+        end
+
+        def defeats?(other)
+          other == Rock.instance
+        end
+      end
+
+      class Scissors < Shape
+        def points
+          3
+        end
+
+        def defeats?(other)
+          other == Paper.instance
+        end
+      end
 
       def part1
-        rounds.inject(0) do |total, (opponent, response)|
-          total += SHAPE_VALUES[response]
-          total += result_points(opponent, response)
+        opponent_and_response.inject(0) do |total, (opponent, response)|
+          total += response.points
+          total += 6 if response.defeats?(opponent)
+          total += 3 if response == opponent
           total
         end
       end
 
       private
 
-      def result_points(opponent_shape, response_shape)
-        if DEFEATED_BY[response_shape] == opponent_shape
-          6
-        elsif DEFEATED_BY[opponent_shape] == response_shape
-          0
-        else
-          3
+      def opponent_and_response
+        rounds.map do |round|
+          round.map { |code| Shape.find(code) }
         end
       end
 
       def rounds
-        @rounds ||= input.lines.map { |line| line.chomp.split.map(&SHAPE_CODES) }
+        @rounds ||= input.lines.map { |line| line.chomp.split }
       end
     end
   end
