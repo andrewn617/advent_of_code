@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+
+require_relative "../solver"
+
+solver = ARGV[0] ? Solver.new(ARGV[0], ARGV[1]) : Solver.today
+
+puts "Part 1 solution: #{solver.part1}"
+puts "Part 2 solution: #{solver.part2}"
