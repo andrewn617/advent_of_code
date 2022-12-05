@@ -14,7 +14,7 @@ module AdventOfCode
       private
 
       def calorie_counts
-        @calorie_counts ||= @input
+        @calorie_counts ||= input
           .split("\n\n")
           .map { |group| group.each_line.sum(&:to_i) }
       end
