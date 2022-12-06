@@ -10,7 +10,11 @@ module AdventOfCode
         end
       end
 
-      private
+      def part2
+        assignment_pairs.count do |assignment1, assignment2|
+          assignment1.intersection(assignment2).any?
+        end
+      end
 
       def assignment_pairs
         input.lines.map do |assignment_pair|
