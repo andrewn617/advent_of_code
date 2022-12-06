@@ -4,21 +4,25 @@ module AdventOfCode
   module Year2022
     class Day5 < Day
       def part1
-        cargo = Cargo.new(stacks)
+        cargo = Cargo.new(stacks, mover: OneByOneMover.new)
 
         instructions.each { |instruction| cargo.move!(instruction) }
 
-        cargo.available_crates
+        cargo.top_crates
+      end
+
+      def part2
+        cargo = Cargo.new(stacks, mover: GroupMover.new)
+
+        instructions.each { |instruction| cargo.move!(instruction) }
+
+        cargo.top_crates
       end
 
       private
 
       def stacks
-        parsed_crate_data.map { |stack_data| Stack.new(stack_data) }
-      end
-
-      def parsed_crate_data
-        @parsed_crate_data ||= initial_create_data.map do |line|
+        @stacks ||= initial_create_data.map do |line|
           line
             .chomp
             .chars
@@ -28,32 +32,29 @@ module AdventOfCode
       end
 
       def initial_create_data
-        @initial_create_data ||= input.split("\n\n").first.lines[0..-2]
+        input.split("\n\n").first.lines[0..-2]
       end
 
       def instructions
-        raw_instructions.map { |raw_instruction| Instruction.from_string(raw_instruction) }
+        @instructions ||= raw_instructions.map { |raw_instruction| Instruction.from_string(raw_instruction) }
       end
 
       def raw_instructions
-        @raw_instructions ||= input.split("\n\n").last.lines
+        input.split("\n\n").last.lines
       end
 
       class Cargo
-        def initialize(stacks)
+        def initialize(stacks, mover:)
           @stacks = stacks
+          @mover = mover
         end
 
-        def available_crates
-          @stacks.map(&:top).join
+        def top_crates
+          @stacks.map(&:last).join
         end
 
         def move!(instruction)
-          instruction.quantity.times do
-            crate = stack(instruction.from).pick_up!
-
-            stack(instruction.to).drop_off!(crate)
-          end
+          @mover.move!(instruction.quantity, stack(instruction.from), stack(instruction.to))
         end
 
         def stack(number)
@@ -61,23 +62,21 @@ module AdventOfCode
         end
       end
 
-      class Stack
-        attr_reader :crates
+      class OneByOneMover
+        def move!(quantity, from_stack, to_stack)
+          quantity.times do
+            crate = from_stack.pop
 
-        def initialize(crates)
-          @crates = crates
+            to_stack.push(crate)
+          end
         end
+      end
 
-        def top
-          crates.last
-        end
+      class GroupMover
+        def move!(quantity, from_stack, to_stack)
+          crates = from_stack.pop(quantity)
 
-        def pick_up!
-          @crates.pop
-        end
-
-        def drop_off!(crate)
-          @crates.push(crate)
+          to_stack.push(*crates)
         end
       end
 
