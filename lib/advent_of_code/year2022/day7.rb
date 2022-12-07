@@ -6,7 +6,7 @@ module AdventOfCode
       def part1
         terminal = Terminal.new
 
-        terminal.execute(input.lines.map(&:chomp))
+        input.lines.map(&:chomp).each { |instruction| terminal.execute(instruction) }
 
         terminal.all_directories.map(&:size).select { |size| size < 100000 }.sum
       end
@@ -14,7 +14,7 @@ module AdventOfCode
       def part2
         terminal = Terminal.new
 
-        terminal.execute(input.lines.map(&:chomp))
+        input.lines.map(&:chomp).each { |instruction| terminal.execute(instruction) }
 
         needed_space = 30000000 - terminal.free_disk_space
 
@@ -39,30 +39,14 @@ module AdventOfCode
           TOTAL_DISK_SPACE - @root.size
         end
 
-        def execute(instruction_sequence)
-          instruction_sequence.reverse!
-
-          until instruction_sequence.empty?
-            current = instruction_sequence.pop
-
-            break unless current[0] == "$"
-
-            _, instruction, content = current.split(" ")
-
-            if instruction == "cd" && content == "/"
-              @pwd = @root
-            elsif instruction == "cd"
-              @pwd = @pwd.cd(content)
-            elsif instruction == "ls"
-              contents = []
-              loop do
-                break if instruction_sequence.empty?
-                break if instruction_sequence.last[0] == "$"
-
-                contents << instruction_sequence.pop
-              end
-              @pwd.ls(contents)
-            end
+        def execute(instruction)
+          if instruction == "$ cd /"
+            @pwd = @root
+          elsif instruction[0..3] == "$ cd"
+            *_, directory = instruction.split
+            @pwd = @pwd.cd(directory)
+          elsif instruction[0..3] != "$ ls"
+            @pwd.add(instruction)
           end
         end
       end
@@ -90,14 +74,12 @@ module AdventOfCode
           end
         end
 
-        def ls(contents)
-          contents.each do |content|
-            first, second = content.split(" ")
-            if first == "dir"
-              @subdirectories[second] = Directory.new(parent = self)
-            else
-              @files[second] = first.to_i
-            end
+        def add(content)
+          first, second = content.split
+          if first == "dir"
+            @subdirectories[second] = Directory.new(parent = self)
+          else
+            @files[second] = first.to_i
           end
         end
       end
