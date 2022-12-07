@@ -4,6 +4,9 @@ require_relative "../solver"
 
 solver = ARGV[0] ? Solver.new(ARGV[0], ARGV[1]) : Solver.today
 
+start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 puts "Solving Year #{solver.year} Day #{solver.day}"
 puts "Part 1 solution: #{solver.part1}"
 puts "Part 2 solution: #{solver.part2}"
+elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+puts "Completed in #{elapsed} seconds"
